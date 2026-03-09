@@ -1,0 +1,30 @@
+Package: pppms
+Title: Confidence Limits for Prediction Performance After Model Selection
+Version: 0.0.0.9000
+Authors@R: 
+    person(
+        given = "Pascal",
+        family = "Rink",
+        role = c("aut", "cre"),
+        email = "p.rink@uni-bremen.de"
+    )
+Description: Methods for multiplicity-adjusted bootstrap tilting lower
+    confidence limits for prediction performance after selecting the
+    empirically best candidate model. The package is designed for
+    post-selection inference in comparative prediction settings and
+    provides tools for confidence statements that account for the
+    model-selection step.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    stats
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+URL: https://github.com/pascalrink/pppms
+BugReports: https://github.com/pascalrink/pppms/issues

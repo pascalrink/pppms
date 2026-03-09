@@ -1,0 +1,25 @@
+
+template:
+  bootstrap: 5
+
+home:
+  title: "pppms"
+  description: >
+    Confidence limits for prediction performance after model selection.
+
+navbar:
+  structure:
+    left:  [home, reference, articles]
+    right: [github]
+
+reference:
+  - title: Main method
+    contents:
+      - MabtCI
+
+articles:
+  - title: Methodological background
+    contents:
+      - methodological-background
+
+url: https://pascalrink.github.io/pppms/

@@ -1,0 +1,23 @@
+
+citHeader("To cite the pppms package in publications use:")
+
+citEntry(
+  entry = "misc",
+  title = "pppms: Confidence Limits for Prediction Performance",
+  author = personList(
+    as.person("Pascal Rink")
+  ),
+  year = "2025",
+  note = "R package version 0.0.0.9000",
+  url = "https://github.com/pascalrink/pppms"
+)
+
+citEntry(
+  entry = "phdthesis",
+  title = "Confidence Limits for Prediction Performance",
+  author = personList(
+    as.person("Pascal Rink")
+  ),
+  year = "2025",
+  school = "University of Bremen"
+)
