@@ -6,16 +6,11 @@ output: github_document
 
 # pppms
 
-`pppms` provides statistical methods for **confidence limits for prediction
-performance after model selection**.
-
-The package implements procedures based on **multiplicity-adjusted bootstrap
-tilting** to obtain **lower confidence limits for the prediction performance
-of the empirically best-performing model** among a set of candidates.
+`pppms` is an R package for post-selection inference in predictive modeling. It implements multiplicity-adjusted bootstrap tilting methods for lower confidence limits for prediction performance after selecting the empirically best candidate model.
 
 The methods implemented in this package originate from the dissertation
 
-> Rink, P. (2025). *Confidence Limits for Prediction Performance*.
+> Rink, P. (2025). *Confidence Limits for Prediction Performance*. PhD thesis, University of Bremen, https://doi.org/10.26092/elib/3822
 
 The package is intended as a **methods package for post-selection inference
 in predictive modeling**.
