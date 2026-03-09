@@ -1,9 +1,6 @@
 pppms: Confidence Limits for Prediction Performance
 ================
 
-[![R-CMD-check](https://github.com/pascalrink/pppms/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pascalrink/pppms/actions)
-[![pkgdown](https://img.shields.io/badge/docs-pkgdown-blue)](https://pascalrink.github.io/pppms/)
-
 # pppms
 
 `pppms` provides statistical methods for **confidence limits for
