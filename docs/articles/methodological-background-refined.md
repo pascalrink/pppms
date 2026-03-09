@@ -1,0 +1,278 @@
+# Methodological Background: Confidence Limits for Prediction Performance
+
+## Overview
+
+This vignette provides the methodological background for `pppms`. It is
+written as a bridge between the package interface and the statistical
+ideas developed in the dissertation *Confidence Limits for Prediction
+Performance*.
+
+The package addresses the following inferential problem: given several
+candidate prediction rules, and after selecting the empirically best one
+on the basis of the same evaluation data, how can one quantify
+uncertainty for the prediction performance of the selected rule while
+accounting for the selection step?
+
+The method implemented here is based on **multiplicity-adjusted
+bootstrap tilting** and produces **lower confidence limits** for the
+prediction performance of the selected rule.
+
+## Statistical setup
+
+Suppose an evaluation sample of size $`n`$ is available, with binary
+outcomes
+
+``` math
+
+Y_1, \dots, Y_n \in \{0,1\},
+```
+
+and $`K`$ candidate prediction rules. For candidate
+$`j \in \{1,\dots,K\}`$, let $`\hat Y_{ij}`$ denote the prediction for
+observation $`i`$.
+
+For classification accuracy, define the observation-wise contribution
+
+``` math
+
+Z_{ij} = I(Y_i = \hat Y_{ij}),
+```
+
+so that the empirical performance of candidate $`j`$ is
+
+``` math
+
+\hat \theta_j = \frac{1}{n}\sum_{i=1}^n Z_{ij}.
+```
+
+The empirically best candidate is then
+
+``` math
+
+\hat j = \arg\max_{1 \le j \le K} \hat \theta_j.
+```
+
+A naive analysis would report $`\hat \theta_{\hat j}`$, possibly
+together with a standard confidence interval for a fixed model. This is
+generally not valid after model selection, because the same data have
+been used both to identify the best candidate and to evaluate it.
+
+## Why the naive analysis is problematic
+
+Selection among several candidates introduces optimism. Even when each
+candidate is assessed fairly on its own, the maximum over many noisy
+estimates tends to be too large. This is a multiplicity phenomenon.
+
+The key inferential challenge is therefore not merely to estimate a
+single performance parameter, but to perform valid inference **after the
+best model has been selected from a finite set of competitors**.
+
+This naturally leads to a simultaneous-inference perspective: one should
+account for the whole family of candidate models rather than treating
+the selected one as if it had been chosen in advance.
+
+## Conditional prediction performance
+
+The target of inference is the performance of the selected rule,
+conditional on the concrete set of candidate prediction rules under
+consideration.
+
+This is the practically relevant target in many applied settings.
+Analysts do not deploy a random model drawn from a model-generating
+mechanism. They deploy the rule that emerges from a specific comparison
+or selection process. The selection step is therefore part of the
+inferential problem.
+
+The goal is to construct a lower confidence bound $`L_\alpha`$ such
+that, approximately,
+
+``` math
+
+\Pr\!\left(\theta_{\hat j} \ge L_\alpha\right) \ge 1 - \alpha,
+```
+
+where $`\theta_{\hat j}`$ denotes the prediction performance of the
+selected candidate rule.
+
+## Multiplicity-adjusted bootstrap tilting
+
+The package combines two ideas:
+
+1.  **multiplicity adjustment**, to account for simultaneous comparison
+    across candidate models;
+2.  **bootstrap tilting**, to evaluate the tail behavior relevant for a
+    lower confidence bound.
+
+### Multiplicity adjustment
+
+A max-type calibration is used to account for the fact that several
+candidate models are compared. Rather than calibrating uncertainty model
+by model, the procedure works with the joint bootstrap distribution of
+standardized statistics across all candidates.
+
+This prevents the selected rule from being treated as if it had been
+fixed in advance.
+
+### Bootstrap tilting
+
+In ordinary bootstrap resampling, observations receive equal resampling
+probability. In tilted bootstrap procedures, these probabilities are
+modified through weights of the form
+
+``` math
+
+w_i(\tau) \propto \exp\!\bigl(\tau \psi_i\bigr),
+```
+
+where $`\psi_i`$ is an empirical influence quantity and $`\tau`$ is a
+tilting parameter.
+
+The purpose of tilting is to move the resampling distribution toward the
+boundary case relevant for the lower confidence limit. This can improve
+the stability and relevance of the calibration for tail probabilities.
+
+In implementation, the weights are usually normalized after working on
+the log scale for numerical stability.
+
+## High-level algorithm
+
+The function
+[`MabtCI()`](https://pascalrink.github.io/pppms/reference/MabtCI.md)
+implements the following logic.
+
+1.  Compute empirical prediction performance for each candidate model.
+2.  Select the empirically best model.
+3.  Generate stratified bootstrap samples from the evaluation data.
+4.  Recompute model-wise performance estimates in each bootstrap sample.
+5.  Standardize the bootstrap deviations to obtain a joint bootstrap
+    sample of statistics.
+6.  Transform the bootstrap sample into a multiplicity-adjusted
+    reference distribution based on maxima across candidate models.
+7.  Introduce tilted observation weights indexed by the tilting
+    parameter $`\tau`$.
+8.  Evaluate a p-value-like calibration function under the tilted
+    bootstrap distribution.
+9.  Solve for the value of $`\tau`$ such that the calibration matches
+    the nominal significance level $`\alpha`$.
+10. Convert the corresponding tilted mean into the lower confidence
+    bound.
+
+## Relation to the package interface
+
+The current package interface is intentionally narrow:
+
+``` r
+res <- MabtCI(
+  true_labels = y,
+  pred_labels = pred_mat,
+  alpha = 0.05,
+  B = 10000,
+  seed = 1
+)
+```
+
+The package expects:
+
+- `true_labels`: a binary outcome vector coded as `0` and `1`;
+- `pred_labels`: a matrix whose columns represent candidate prediction
+  rules;
+- `alpha`: the target significance level;
+- `B`: the number of bootstrap replications;
+- `seed`: an optional random seed.
+
+The returned object currently contains:
+
+- `bound`: the lower confidence bound;
+- `tau`: the estimated tilting parameter;
+- `t0`: the observed performance of the selected candidate;
+- `selected_idx`: the index of the selected candidate.
+
+This interface emphasizes the inferential end product rather than
+exposing all internal bootstrap objects. That is deliberate: `pppms` is
+meant to be a methods package rather than a general prediction
+framework.
+
+## Example
+
+The following toy example illustrates the package workflow.
+
+``` r
+library(pppms)
+
+y <- c(0, 0, 1, 1, 0, 1)
+
+pred_mat <- cbind(
+  model1 = c(0, 0, 1, 1, 1, 1),
+  model2 = c(0, 1, 1, 0, 0, 1)
+)
+
+res <- MabtCI(
+  true_labels = y,
+  pred_labels = pred_mat,
+  alpha = 0.05,
+  B = 200,
+  seed = 1
+)
+
+res
+#> $bound
+#> [1] 0.6955035
+#> 
+#> $tau
+#> [1] -0.7834613
+#> 
+#> $t0
+#> [1] 0.8333333
+#> 
+#> $selected_idx
+#> [1] 1
+```
+
+A typical interpretation is:
+
+- `t0` is the observed empirical performance of the selected model;
+- `tau` is the tilting parameter solving the calibration equation;
+- `bound` is the multiplicity-adjusted lower confidence limit for the
+  selected model’s prediction performance.
+
+## Interpretation of the lower bound
+
+The lower confidence bound should not be read as a corrected point
+estimate. Its role is inferential.
+
+For example, if the method returns a lower bound of 0.78 at confidence
+level $`1-\alpha = 0.95`$, the intended interpretation is that the data
+support the claim that the prediction performance of the selected rule
+is at least 0.78, up to the approximation error inherent in the method.
+
+This is especially useful in settings where several candidate models
+perform similarly and naive performance reporting would exaggerate the
+evidence in favor of the empirically best one.
+
+## Scope and limitations
+
+The current implementation is deliberately focused. It provides a
+working and interpretable first version of the core method for binary
+prediction settings with candidate prediction rules represented by
+columns of a prediction matrix.
+
+This package should make clear which parts are already implemented and
+which extensions would require additional methodological work. In
+particular, generalization to more complex performance measures or
+dependence structures may require theory beyond the currently
+implemented version.
+
+## Positioning
+
+`pppms` is not intended as a machine-learning framework for model
+fitting. Its contribution is inferential.
+
+The package is meant for users who already have candidate prediction
+rules and want principled uncertainty quantification for the selected
+rule’s performance, with explicit adjustment for the model-selection
+step.
+
+## References
+
+Rink, P. (2025). *Confidence Limits for Prediction Performance*.
+Doctoral thesis, University of Bremen.
